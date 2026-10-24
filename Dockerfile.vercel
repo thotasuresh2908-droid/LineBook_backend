@@ -1,0 +1,20 @@
+# Used by Vercel (it detects the name "Dockerfile.vercel" at the project root).
+# Vercel runs this image as a Vercel Function: set the PORT environment variable in the Vercel project (e.g. 8080);
+# the app listens on it.
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+COPY pom.xml .
+RUN mvn -q -B dependency:go-offline
+COPY src ./src
+RUN mvn -q -B -DskipTests package
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+RUN useradd --system --no-create-home linebook
+USER linebook
+COPY --from=build /workspace/target/linebook-backend-*.jar app.jar
+# Faster start and a smaller footprint for a function that scales to zero.
+ENV JAVA_TOOL_OPTIONS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:MaxRAMPercentage=75 -Xshare:auto"
+ENV PORT=8080
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
