@@ -1,44 +1,43 @@
+
 server:
-  # Vercel sets the port with the PORT variable; SERVER_PORT is the manual override; 9000 is the local default.
   port: ${PORT:${SERVER_PORT:9000}}
 
 spring:
   application:
-    name: linebook-backend
+    name: ${SPRING_APPLICATION_NAME:linebook-backend}
+
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/linebook_db?createDatabaseIfNotExist=true}
-    username: ${DB_USERNAME:linebook}
-    password: ${DB_PASSWORD:linebook}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+
     hikari:
-      # Small pool: on Vercel several instances can run at once and a managed MySQL has a connection limit.
       maximum-pool-size: ${DB_POOL_SIZE:5}
-      minimum-idle: 1
-      # Recycle connections before a managed database or proxy closes idle ones.
+      minimum-idle: ${DB_MIN_IDLE:1}
       max-lifetime: ${DB_MAX_LIFETIME_MS:300000}
-      connection-timeout: 20000
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:20000}
+
   jpa:
-    open-in-view: false
+    open-in-view: ${JPA_OPEN_IN_VIEW:false}
     hibernate:
-      ddl-auto: none        # Flyway owns the schema
+      ddl-auto: ${JPA_DDL_AUTO:none}
+
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:true}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: ${ACTUATOR_EXPOSED_ENDPOINTS:health,info}
 
 linebook:
-  # "Today", receipt numbers, the current billing cycle and customers' "since" date use this zone.
   zone: ${LINEBOOK_ZONE:Asia/Kolkata}
-  # Printed on receipts.
   operator-name: ${OPERATOR_NAME:Surya Cable Network}
-  # Used when neither the request nor the customer names an agent (the UI falls back to "ag-01").
   default-agent-id: ${DEFAULT_AGENT_ID:ag-01}
-  # The UI's Record-collection dialog only offers current-cycle bills. Set to false to also accept older bills.
   current-cycle-only: ${CURRENT_CYCLE_ONLY:true}
+
   cors:
-    # Browser origins allowed to call the API (the LineBook front end).
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8080,http://localhost:5173}
-    max-age: 1h
+    max-age: ${CORS_MAX_AGE:1h}
