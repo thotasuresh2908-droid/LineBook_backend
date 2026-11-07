@@ -2,6 +2,10 @@ package com.linebook.common.web;
 
 import com.linebook.agent.exception.AgentNotFoundException;
 import com.linebook.agent.exception.InvalidAgentException;
+import com.linebook.auth.exception.ForbiddenException;
+import com.linebook.auth.exception.InvalidUserException;
+import com.linebook.auth.exception.UnauthorizedException;
+import com.linebook.auth.exception.UserNotFoundException;
 import com.linebook.billing.exception.BillNotFoundException;
 import com.linebook.billing.exception.InvalidPaymentException;
 import com.linebook.collection.exception.CollectionNotFoundException;
@@ -29,9 +33,23 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    /** Not signed in, bad credentials, expired session. The UI sends the person to the login page on 401. */
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(UnauthorizedException.class)
+    ProblemDetail unauthorized(RuntimeException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    /** Signed in, but this action is for admins only. */
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(ForbiddenException.class)
+    ProblemDetail forbidden(RuntimeException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler({CustomerNotFoundException.class, BillNotFoundException.class,
-            CollectionNotFoundException.class, AgentNotFoundException.class})
+            CollectionNotFoundException.class, AgentNotFoundException.class, UserNotFoundException.class})
     ProblemDetail notFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
@@ -44,7 +62,7 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({InvalidCustomerException.class, InvalidAgentException.class})
+    @ExceptionHandler({InvalidCustomerException.class, InvalidAgentException.class, InvalidUserException.class})
     ProblemDetail invalid(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }

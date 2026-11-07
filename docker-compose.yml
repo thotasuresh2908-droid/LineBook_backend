@@ -1,7 +1,9 @@
 # LineBook backend + MySQL.
 #
 #   docker compose up --build                                  # http://localhost:9000
-#   SPRING_PROFILES_ACTIVE=demo docker compose up --build      # also load the 36 demo customers and this month's bills
+#
+# The database starts empty apart from the package catalogue. Set LINEBOOK_ADMIN_EMAIL and
+# LINEBOOK_ADMIN_PASSWORD below to get your first sign-in, then add agents and customers in the app.
 services:
   mysql:
     image: mysql:8.4
@@ -30,8 +32,12 @@ services:
       DB_URL: jdbc:mysql://mysql:3306/linebook_db
       DB_USERNAME: linebook
       DB_PASSWORD: linebook
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8080,http://localhost:5173}
+      # Sign-in. Set a real secret outside local use; the first admin is created on first start.
+      LINEBOOK_AUTH_SECRET: ${LINEBOOK_AUTH_SECRET:-local-dev-secret-change-me}
+      LINEBOOK_ADMIN_EMAIL: ${LINEBOOK_ADMIN_EMAIL:-}
+      LINEBOOK_ADMIN_PASSWORD: ${LINEBOOK_ADMIN_PASSWORD:-}
+      LINEBOOK_ADMIN_NAME: ${LINEBOOK_ADMIN_NAME:-LineBook Admin}
     ports:
       - "9000:9000"
 

@@ -2,6 +2,8 @@ package com.linebook.collection.service;
 
 import com.linebook.agent.dto.AgentResponse;
 import com.linebook.agent.service.AgentService;
+import com.linebook.auth.web.CurrentUser;
+import com.linebook.auth.web.CurrentUserHolder;
 import com.linebook.billing.dto.BillResponse;
 import com.linebook.billing.service.BillingService;
 import com.linebook.collection.domain.CollectionRecord;
@@ -26,11 +28,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * "Record collection". Behaviour matches the front end's collect():
- * whole-rupee amount, > 0 and within the pending balance, cash by default, the customer's agent by default,
- * and a numbered receipt.
+ * whole-rupee amount, > 0 and within the pending balance, cash by default, and a numbered receipt.
  *
- * One transaction covers everything: the payment applied to the bill (the bill row is locked, so two simultaneous
- * collections cannot overpay), the receipt number and the collection row. If any step fails, nothing is saved.
+ * <p>Who the money is booked under now comes from who is signed in. When an agent records a
+ * collection it is always their own name, whatever the request says, so one agent can never write
+ * a receipt in another's book. An admin may still choose the agent; if they choose none, the
+ * customer's own agent is used, then the configured default.
+ *
+ * <p>One transaction covers everything: the payment applied to the bill (the bill row is locked, so
+ * two simultaneous collections cannot overpay), the receipt number and the collection row. If any
+ * step fails, nothing is saved.
  */
 @Service
 public class CollectionService {
@@ -73,7 +80,7 @@ public class CollectionService {
                     "Enter a valid amount within the pending balance (pending: " + bill.pending().toPlainString() + ")");
         }
 
-        String agentId = CollectionRules.resolveAgent(request.agentId(), bill.customer().agentId(), props.defaultAgentId());
+        String agentId = resolveAgentId(request, bill);
         AgentResponse agent = agents.find(agentId)
                 .orElseThrow(() -> new InvalidCollectionException("Unknown agent: " + agentId));
 
@@ -102,6 +109,23 @@ public class CollectionService {
                 request.notes() == null ? "" : request.notes().trim()));
 
         return new CollectResult(CollectionResponse.from(saved), true);
+    }
+
+    /**
+     * A signed-in agent always collects as themselves. Anyone else (an admin) may name an agent;
+     * otherwise the customer's own agent is used, then the configured default.
+     */
+    private String resolveAgentId(CollectRequest request, BillResponse bill) {
+        Optional<CurrentUser> caller = CurrentUserHolder.find();
+        if (caller.isPresent() && caller.get().isAgent()) {
+            String own = caller.get().agentId();
+            if (own == null || own.isBlank()) {
+                throw new InvalidCollectionException(
+                        "Your login is not linked to an agent yet; ask your admin to set it up");
+            }
+            return own;
+        }
+        return CollectionRules.resolveAgent(request.agentId(), bill.customer().agentId(), props.defaultAgentId());
     }
 
     /** The Record-collection dialog only offers pending, current-cycle bills of connections that are not disconnected. */

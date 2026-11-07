@@ -9,4 +9,7 @@ public interface CollectionRepository
 
     /** Receipts already issued with this prefix (used to number the next receipt of the day). */
     long countByReceiptNoStartingWith(String prefix);
+
+    /** Receipts issued in an agent's name; checked before an agent may be deleted. */
+    long countByAgentId(String agentId);
 }

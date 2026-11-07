@@ -14,6 +14,9 @@ public interface CustomerRepository extends JpaRepository<Customer, String>, Jpa
 
     long countByStatusAndRecurring(ConnectionStatus status, boolean recurring);
 
+    /** How many customers are assigned to an agent; checked before an agent may be deleted. */
+    long countByAgentId(String agentId);
+
     @Query("select distinct c.area from Customer c order by c.area")
     List<String> findDistinctAreas();
 
