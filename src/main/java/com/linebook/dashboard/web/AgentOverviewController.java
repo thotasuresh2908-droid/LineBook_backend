@@ -1,5 +1,7 @@
 package com.linebook.dashboard.web;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.linebook.dashboard.dto.AgentOverview;
 import com.linebook.dashboard.service.AgentOverviewService;
 import java.time.LocalDate;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Agents", description = "Collection agents")
 @RestController
 @RequestMapping("/api/agents")
 public class AgentOverviewController {
@@ -21,6 +24,7 @@ public class AgentOverviewController {
     }
 
     /** The Agents page: one card of figures per agent. {@code cycle=yyyy-MM} and {@code date=yyyy-MM-dd} are optional. */
+    @Operation(summary = "Agents page: accounts, collected today, cycle book and % collected per agent")
     @GetMapping("/overview")
     public List<AgentOverview> overview(
             @RequestParam(required = false) String cycle,

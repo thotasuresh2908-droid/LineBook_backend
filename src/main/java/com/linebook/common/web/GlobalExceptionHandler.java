@@ -19,6 +19,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
@@ -28,6 +29,7 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler({CustomerNotFoundException.class, BillNotFoundException.class,
             CollectionNotFoundException.class, AgentNotFoundException.class})
     ProblemDetail notFound(RuntimeException ex) {
@@ -35,16 +37,19 @@ public class GlobalExceptionHandler {
     }
 
     /** A collection that is not allowed: bad amount, settled or disconnected bill, unknown agent. */
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     @ExceptionHandler({InvalidPaymentException.class, InvalidCollectionException.class})
     ProblemDetail unprocessable(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), ex.getMessage());
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({InvalidCustomerException.class, InvalidAgentException.class})
     ProblemDetail invalid(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail invalidBody(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()
@@ -53,24 +58,28 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ProblemDetail unreadable(HttpMessageNotReadableException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
                 "Malformed request body (status must be pending, active, suspended or disconnected; method must be cash or upi)");
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     ProblemDetail badParameter(MethodArgumentTypeMismatchException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
                 "Invalid value for '" + ex.getName() + "' (dates are yyyy-MM-dd)");
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(DateTimeParseException.class)
     ProblemDetail badCycle(DateTimeParseException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "cycle must be formatted as yyyy-MM");
     }
 
     /** e.g. an unknown ?status= filter value. */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IllegalArgumentException.class)
     ProblemDetail badArgument(IllegalArgumentException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
@@ -79,6 +88,7 @@ public class GlobalExceptionHandler {
     }
 
     /** A unique key was hit, e.g. two requests racing for the same account number or the same collectionId. */
+    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(DataIntegrityViolationException.class)
     ProblemDetail conflict(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation", ex);

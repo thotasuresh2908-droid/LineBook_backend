@@ -1,5 +1,7 @@
 package com.linebook.collection.web;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.linebook.collection.dto.CollectRequest;
 import com.linebook.collection.dto.CollectResult;
 import com.linebook.collection.dto.CollectionResponse;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Collections", description = "Collections (payments received) and receipts")
 @RestController
 @RequestMapping("/api/collections")
 public class CollectionController {
@@ -35,24 +38,31 @@ public class CollectionController {
     }
 
     /** "Save collection". 201 when recorded, 200 when the same collectionId had already been recorded. */
+    @Operation(summary = "Record a collection")
     @PostMapping
     public ResponseEntity<CollectionResponse> collect(@Valid @RequestBody CollectRequest request) {
         CollectResult result = service.collect(request);
         return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.collection());
     }
 
-    /** Collections between two dates (yyyy-MM-dd, inclusive; default today), newest first. */
+    /**
+     * Collections, newest first. Default: today. {@code from}/{@code to} are yyyy-MM-dd, inclusive. With
+     * {@code cycle=yyyy-MM}: that cycle's collections (Reports page), optionally narrowed by from / to.
+     */
+    @Operation(summary = "List collections (by dates, or by billing cycle for reports)")
     @GetMapping
     public List<CollectionResponse> list(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String cycle,
             @RequestParam(required = false) String agentId,
             @RequestParam(required = false) String billId,
             @RequestParam(required = false) String customerId) {
-        return queries.list(from, to, agentId, billId, customerId);
+        return queries.list(from, to, cycle, agentId, billId, customerId);
     }
 
     /** Today page: receipts, total collected and per-agent split for a day (default today). */
+    @Operation(summary = "Day summary: count, total and per-agent split")
     @GetMapping("/summary")
     public DaySummary summary(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
@@ -60,17 +70,20 @@ public class CollectionController {
     }
 
     /** Today page chart: collected per day for the last N days (default 14). */
+    @Operation(summary = "Collected per day for the last N days")
     @GetMapping("/daily")
     public List<DailyTotal> daily(@RequestParam(required = false) Integer days) {
         return queries.daily(days);
     }
 
+    @Operation(summary = "Get one collection")
     @GetMapping("/{id}")
     public CollectionResponse get(@PathVariable String id) {
         return queries.get(id);
     }
 
     /** What the Receipt dialog prints. */
+    @Operation(summary = "Receipt details for a collection")
     @GetMapping("/{id}/receipt")
     public ReceiptResponse receipt(@PathVariable String id) {
         return queries.receipt(id);

@@ -3,6 +3,7 @@ package com.linebook.collection.domain;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -40,5 +41,23 @@ public final class CollectionRules {
             return customerAgent;
         }
         return fallback;
+    }
+
+    /** A time window [from, toExclusive); either end may be open (null). */
+    public record Window(LocalDateTime from, LocalDateTime toExclusive) {
+    }
+
+    /**
+     * The days a collections list covers (both dates inclusive).
+     * Without a cycle (the Today page): a missing "from" means today and a missing "to" means the same day as "from".
+     * With a cycle (Reports): a missing end stays open, so the whole cycle is covered.
+     */
+    public static Window window(LocalDate from, LocalDate to, boolean withCycle, LocalDate today) {
+        if (withCycle) {
+            return new Window(from == null ? null : from.atStartOfDay(), to == null ? null : to.plusDays(1).atStartOfDay());
+        }
+        LocalDate start = from == null ? today : from;
+        LocalDate end = to == null ? start : to;
+        return new Window(start.atStartOfDay(), end.plusDays(1).atStartOfDay());
     }
 }

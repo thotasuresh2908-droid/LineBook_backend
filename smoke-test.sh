@@ -12,6 +12,8 @@ field() { sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" | head -n1; }
 status() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 
 say "Health";            curl -fsS "$BASE/actuator/health"; echo
+say "API docs (Swagger UI: $BASE/swagger-ui.html)"; echo "GET /v3/api-docs -> $(status "$BASE/v3/api-docs") (404 when SWAGGER_ENABLED=false)"
+say "Business info";      curl -fsS "$BASE/api/info"; echo
 say "Packages";          curl -fsS "$BASE/api/packages"; echo
 say "Agents";            curl -fsS "$BASE/api/agents"; echo
 
@@ -46,6 +48,11 @@ say "Today"
 curl -fsS "$BASE/api/collections/summary"; echo
 curl -fsS "$BASE/api/bills/summary"; echo
 curl -fsS "$BASE/api/collections/daily?days=7"; echo
+
+say "Reports: this cycle's collections, and the agent's customers"
+CYCLE_NOW=$(date +%Y-%m)
+curl -fsS "$BASE/api/collections?cycle=$CYCLE_NOW&agentId=ag-01"; echo
+curl -fsS "$BASE/api/customers?agentId=ag-01" | head -c 300; echo
 
 say "Agents page"
 curl -fsS "$BASE/api/agents/overview"; echo

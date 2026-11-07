@@ -11,6 +11,7 @@ public record CollectionResponse(
         String receiptNo,
         String billId,
         String billNo,
+        String cycle,
         String customerId,
         String customerName,
         String accountNo,
@@ -23,7 +24,7 @@ public record CollectionResponse(
         String notes) {
 
     public static CollectionResponse from(CollectionRecord c) {
-        return new CollectionResponse(c.getId(), c.getReceiptNo(), c.getBillId(), c.getBillNo(), c.getCustomerId(),
+        return new CollectionResponse(c.getId(), c.getReceiptNo(), c.getBillId(), c.getBillNo(), c.getBillCycle(), c.getCustomerId(),
                 c.getCustomerName(), c.getAccountNo(), c.getStbNo(), c.getAgentId(), c.getAgentName(), c.getAmount(),
                 c.getMethod(), c.getCollectedAt(), c.getNotes());
     }

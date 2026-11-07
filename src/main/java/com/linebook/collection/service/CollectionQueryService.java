@@ -5,6 +5,7 @@ import com.linebook.collection.dto.AgentTotal;
 import com.linebook.collection.dto.CollectionResponse;
 import com.linebook.collection.dto.DailyTotal;
 import com.linebook.collection.dto.DaySummary;
+import com.linebook.collection.domain.CollectionRules;
 import com.linebook.collection.dto.ReceiptResponse;
 import com.linebook.collection.exception.CollectionNotFoundException;
 import com.linebook.collection.repository.CollectionRepository;
@@ -13,6 +14,7 @@ import com.linebook.common.config.LinebookProperties;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -41,14 +43,28 @@ public class CollectionQueryService {
         this.clock = clock;
     }
 
-    /** Collections between two dates (inclusive, default today), newest first. Optional agent / bill / customer filters. */
-    public List<CollectionResponse> list(LocalDate from, LocalDate to, String agentId, String billId, String customerId) {
-        LocalDate today = LocalDate.now(clock);
-        LocalDate start = from == null ? today : from;
-        LocalDate end = to == null ? start : to;
+    /**
+     * Collections, newest first. Without a cycle: between two dates (inclusive, default today) - the Today page.
+     * With a cycle (yyyy-MM): that cycle's collections (see {@link CollectionSpecs#inCycle}), optionally narrowed by
+     * from / to - the Reports page. Optional agent (who collected) / bill / customer filters.
+     */
+    public List<CollectionResponse> list(LocalDate from, LocalDate to, String cycle, String agentId, String billId,
+                                         String customerId) {
+        boolean withCycle = !blank(cycle);
+        CollectionRules.Window window = CollectionRules.window(from, to, withCycle, LocalDate.now(clock));
 
-        Specification<CollectionRecord> spec = CollectionSpecs.collectedBetween(
-                start.atStartOfDay(), end.plusDays(1).atStartOfDay());
+        Specification<CollectionRecord> spec = (root, query, cb) -> cb.conjunction();
+        if (withCycle) {
+            YearMonth month = YearMonth.parse(cycle.trim());
+            spec = spec.and(CollectionSpecs.inCycle(month.toString(), month.atDay(1).atStartOfDay(),
+                    month.plusMonths(1).atDay(1).atStartOfDay()));
+        }
+        if (window.from() != null) {
+            spec = spec.and(CollectionSpecs.collectedFrom(window.from()));
+        }
+        if (window.toExclusive() != null) {
+            spec = spec.and(CollectionSpecs.collectedBefore(window.toExclusive()));
+        }
         if (!blank(agentId)) {
             spec = spec.and(CollectionSpecs.byAgent(agentId.trim()));
         }

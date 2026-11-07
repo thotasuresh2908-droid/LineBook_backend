@@ -182,6 +182,26 @@ class BillingServiceTest {
     }
 
     @Test
+    void aBillCarriesTheWholeCustomerSoItCanBeSharedAsAWhatsAppImage() {
+        CustomerResponse c = new CustomerResponse("c-1", "SCN-c-1", "Lakshmi Devi", "9800000001", "12-3, Lane 4", "Ameerpet",
+                "120000000001", "VC00440001", "pkg-family", new BigDecimal("299"), ConnectionStatus.ACTIVE, true, 28, "ag-01",
+                LocalDate.of(2026, 1, 1));
+        Bill bill = BillingRules.makeBill(c, YearMonth.of(2026, 10), 1);
+        when(bills.findById(bill.getId())).thenReturn(Optional.of(bill));
+        when(customers.find("c-1")).thenReturn(Optional.of(c));
+        when(payments.sumByBillId(bill.getId())).thenReturn(new BigDecimal("100"));
+
+        BillResponse response = service.get(bill.getId());
+
+        assertThat(response.customer().address()).isEqualTo("12-3, Lane 4");
+        assertThat(response.customer().vcNo()).isEqualTo("VC00440001");
+        assertThat(response.customer().packageId()).isEqualTo("pkg-family");
+        assertThat(response.customer().phone()).isEqualTo("9800000001");
+        assertThat(response.paid()).isEqualByComparingTo("100");
+        assertThat(response.pending()).isEqualByComparingTo("199");
+    }
+
+    @Test
     void replayingACollectionIdDoesNotCountTwice() {
         CustomerResponse c = customer("c-1", ConnectionStatus.ACTIVE, true, 28);
         Bill bill = BillingRules.makeBill(c, YearMonth.of(2026, 10), 1);

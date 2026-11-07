@@ -6,7 +6,6 @@ import com.linebook.billing.domain.BillStatus;
 import com.linebook.billing.domain.BillingRules;
 import com.linebook.billing.dto.BillResponse;
 import com.linebook.billing.dto.AgentSummary;
-import com.linebook.billing.dto.CustomerSummary;
 import com.linebook.billing.dto.EnsureBillResponse;
 import com.linebook.billing.dto.GenerateResponse;
 import com.linebook.billing.dto.StatusCounts;
@@ -270,7 +269,7 @@ public class BillingService {
                 paid,
                 BillingRules.pending(bill.getAmount(), paid),
                 BillingRules.billStatus(bill.getAmount(), paid, bill.getDueDate(), today),
-                new CustomerSummary(c.id(), c.accountNo(), c.name(), c.phone(), c.area(), c.stbNo(), c.status(), c.agentId()));
+                c);
     }
 
     private BigDecimal paidOn(String billId) {
@@ -297,7 +296,7 @@ public class BillingService {
     }
 
     private static String searchText(BillResponse b, boolean includePhone) {
-        CustomerSummary c = b.customer();
+        CustomerResponse c = b.customer();
         String text = nz(b.billNo()) + " " + nz(c.name()) + " " + nz(c.accountNo()) + " " + nz(c.stbNo());
         if (includePhone) {
             text += " " + nz(c.phone());

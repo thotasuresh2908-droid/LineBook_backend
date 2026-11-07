@@ -131,9 +131,18 @@ public class CustomerService {
     /** Customers in creation order. All filters optional; "all" (or blank) means no filter. */
     @Transactional(readOnly = true)
     public List<CustomerResponse> list(Collection<String> ids, String q, String area, String status) {
+        return list(ids, q, area, status, null);
+    }
+
+    /** Same, also filtered by the agent the customers are assigned to (the Reports page's agent filter). */
+    @Transactional(readOnly = true)
+    public List<CustomerResponse> list(Collection<String> ids, String q, String area, String status, String agentId) {
         Specification<Customer> spec = (root, query, cb) -> cb.conjunction();
         if (ids != null && !ids.isEmpty()) {
             spec = spec.and(CustomerSpecs.idIn(ids));
+        }
+        if (!isAll(agentId)) {
+            spec = spec.and(CustomerSpecs.ofAgent(agentId.trim()));
         }
         if (!isAll(area)) {
             spec = spec.and(CustomerSpecs.inArea(area.trim()));

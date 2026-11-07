@@ -89,6 +89,7 @@ public class CollectionService {
                 receiptNo,
                 bill.id(),
                 bill.billNo(),
+                bill.cycle(),
                 bill.customerId(),
                 bill.customer().name(),
                 bill.customer().accountNo(),

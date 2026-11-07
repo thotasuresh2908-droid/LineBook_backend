@@ -12,7 +12,6 @@ import com.linebook.agent.dto.AgentResponse;
 import com.linebook.agent.service.AgentService;
 import com.linebook.billing.domain.BillStatus;
 import com.linebook.billing.dto.BillResponse;
-import com.linebook.billing.dto.CustomerSummary;
 import com.linebook.billing.exception.InvalidPaymentException;
 import com.linebook.billing.service.BillingService;
 import com.linebook.collection.domain.CollectionRecord;
@@ -23,6 +22,7 @@ import com.linebook.collection.exception.InvalidCollectionException;
 import com.linebook.collection.repository.CollectionRepository;
 import com.linebook.common.config.LinebookProperties;
 import com.linebook.customer.domain.ConnectionStatus;
+import com.linebook.customer.dto.CustomerResponse;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
@@ -76,8 +76,9 @@ class CollectionServiceTest {
         return new BillResponse("bl-1", "BL-202610-0001", "cu-01", cycle, new BigDecimal("299"),
                 LocalDateTime.of(2026, 10, 1, 8, 15), LocalDate.of(2026, 10, 28), BigDecimal.ZERO, new BigDecimal(pending),
                 BillStatus.PENDING,
-                new CustomerSummary("cu-01", "SCN-1001", "Lakshmi Devi", "9800000001", "Ameerpet", "120000000001",
-                        customerStatus, "ag-02"));
+                new CustomerResponse("cu-01", "SCN-1001", "Lakshmi Devi", "9800000001", "12-3, Lane 4", "Ameerpet",
+                        "120000000001", "VC00440001", "pkg-family", new BigDecimal("299"), customerStatus, true, 1, "ag-02",
+                        LocalDate.of(2026, 1, 1)));
     }
 
     private static CollectRequest request(String amount, String agentId, String collectionId) {
@@ -97,6 +98,7 @@ class CollectionServiceTest {
         assertThat(result.collection().agentName()).isEqualTo("S. Padma");           // looked up from the agent module
         assertThat(result.collection().notes()).isEqualTo("paid at door");
         assertThat(result.collection().customerName()).isEqualTo("Lakshmi Devi");
+        assertThat(result.collection().cycle()).isEqualTo("2026-10");                 // the bill's cycle is kept for reports
         verify(billing).recordPayment(eq("bl-1"), any(), eq(new BigDecimal("299")));
     }
 
@@ -188,7 +190,7 @@ class CollectionServiceTest {
 
     @Test
     void replayingACollectionIdReturnsTheExistingCollectionAndTouchesNothing() {
-        CollectionRecord existing = new CollectionRecord("co-1", "RC-20261012-0007", "bl-1", "BL-202610-0001", "cu-01",
+        CollectionRecord existing = new CollectionRecord("co-1", "RC-20261012-0007", "bl-1", "BL-202610-0001", "2026-10", "cu-01",
                 "Lakshmi Devi", "SCN-1001", "120000000001", "ag-02", "S. Padma", new BigDecimal("100"), PayMethod.UPI,
                 LocalDateTime.of(2026, 10, 12, 9, 0), "");
         when(collections.findById("co-1")).thenReturn(Optional.of(existing));

@@ -27,6 +27,10 @@ public class CollectionRecord {
     @Column(name = "bill_no", length = 32, nullable = false, updatable = false)
     private String billNo;
 
+    /** Billing cycle (yyyy-MM) of the bill this collection paid. */
+    @Column(name = "bill_cycle", length = 7, nullable = false, updatable = false)
+    private String billCycle;
+
     @Column(name = "customer_id", length = 64, nullable = false, updatable = false)
     private String customerId;
 
@@ -62,13 +66,14 @@ public class CollectionRecord {
         // JPA
     }
 
-    public CollectionRecord(String id, String receiptNo, String billId, String billNo, String customerId,
+    public CollectionRecord(String id, String receiptNo, String billId, String billNo, String billCycle, String customerId,
                             String customerName, String accountNo, String stbNo, String agentId, String agentName,
                             BigDecimal amount, PayMethod method, LocalDateTime collectedAt, String notes) {
         this.id = id;
         this.receiptNo = receiptNo;
         this.billId = billId;
         this.billNo = billNo;
+        this.billCycle = billCycle;
         this.customerId = customerId;
         this.customerName = customerName;
         this.accountNo = accountNo;
@@ -85,6 +90,7 @@ public class CollectionRecord {
     public String getReceiptNo() { return receiptNo; }
     public String getBillId() { return billId; }
     public String getBillNo() { return billNo; }
+    public String getBillCycle() { return billCycle; }
     public String getCustomerId() { return customerId; }
     public String getCustomerName() { return customerName; }
     public String getAccountNo() { return accountNo; }

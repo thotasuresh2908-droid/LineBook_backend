@@ -18,6 +18,10 @@ public final class CustomerSpecs {
         return (root, query, cb) -> cb.equal(root.get("area"), area);
     }
 
+    public static Specification<Customer> ofAgent(String agentId) {
+        return (root, query, cb) -> cb.equal(root.get("agentId"), agentId);
+    }
+
     public static Specification<Customer> hasStatus(ConnectionStatus status) {
         return (root, query, cb) -> cb.equal(root.get("status"), status);
     }
