@@ -1,14 +1,17 @@
-package com.linebook.common;
+package com.linebook.common.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.linebook.common.config.LinebookProperties;
-import com.linebook.common.config.OpenApiConfig;
 import io.swagger.v3.oas.models.OpenAPI;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Lives in com.linebook.common.config because OpenApiConfig#linebookOpenApi is package-private,
+ * which is the normal visibility for a @Bean method. The file stays in the common/ test folder,
+ * the same way RequestIdFilterTest declares com.linebook.common.web from that folder.
+ */
 class OpenApiConfigTest {
 
     @Test
